@@ -1180,7 +1180,7 @@ void CMusicPlayerDlg::EnablePlaylist(bool enable)
     m_playlist_toolbar.EnableWindow(enable);
     m_playlist_toolbar.Invalidate();
 
-    if (m_pFloatPlaylistDlg->GetSafeHwnd() != NULL)
+    if (m_pFloatPlaylistDlg != nullptr && m_pFloatPlaylistDlg->GetSafeHwnd() != NULL)
         m_pFloatPlaylistDlg->EnableControl(enable);
     if (m_miniModeDlg.GetSafeHwnd() != NULL)
         m_miniModeDlg.GetPlaylistCtrl().EnableWindow(enable);

@@ -138,12 +138,12 @@ protected:
     CCortanaLyric m_cortana_lyric;      //用于显示Cortana歌词
     CDesktopLyric m_desktop_lyric;      //桌面歌词
 
-    CLyricEditDlg* m_pLyricEdit;        //歌词编辑对话框（非模态对话框）
-    CLyricBatchDownloadDlg* m_pLyricBatchDownDlg;   //歌词批量下载对话框（非模态对话框）
-    CMediaLibDlg* m_pMediaLibDlg;       //媒体库对话框（非模态对话框）
-    CSoundEffectDlg* m_pSoundEffecDlg;      //音效设定对话框（非模态对话框）
-    CFormatConvertDlg* m_pFormatConvertDlg;     //格式转换对话框（非模态对话框）
-    CFloatPlaylistDlg* m_pFloatPlaylistDlg;     //浮动播放列表对话框
+    CLyricEditDlg* m_pLyricEdit{ nullptr };        //歌词编辑对话框（非模态对话框）
+    CLyricBatchDownloadDlg* m_pLyricBatchDownDlg{ nullptr };   //歌词批量下载对话框（非模态对话框）
+    CMediaLibDlg* m_pMediaLibDlg{ nullptr };       //媒体库对话框（非模态对话框）
+    CSoundEffectDlg* m_pSoundEffecDlg{ nullptr };      //音效设定对话框（非模态对话框）
+    CFormatConvertDlg* m_pFormatConvertDlg{ nullptr };     //格式转换对话框（非模态对话框）
+    CFloatPlaylistDlg* m_pFloatPlaylistDlg{ nullptr };     //浮动播放列表对话框
     CPoint m_float_playlist_pos{ INT_MAX, INT_MAX };                //浮动播放列表的位置
 
     CWinThread* m_pThread;      //执行在线查看的线程

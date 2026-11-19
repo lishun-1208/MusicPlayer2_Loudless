@@ -14,6 +14,7 @@
 #include "CRecentList.h"
 #include "MediaLibHelper.h"
 #include "SongMultiVersion.h"
+#include "LoudnessBalance\LoudnessBalanceBass.h"     // 响度平衡（独立模块）
 
 CPlayer CPlayer::m_instance;
 
@@ -509,6 +510,8 @@ void CPlayer::MusicControl(Command command, int volume_step)
         if (m_pCore->GetCoreType() == PT_BASS && GetBassHandle() == 0)
             m_error_state = ES_FILE_CANNOT_BE_OPEN;
         m_file_opend = true;
+        //响度平衡：交给独立模块处理（在后台用 ffmpeg 分析，播放时实时施加增益，不会修改源文件）
+        LoudnessBalance::OnTrackOpened(cur_song.file_path, GetBassHandle());
         //获取音频类型
         m_current_file_type = m_pCore->GetAudioType();  // 根据通道信息获取当前音频文件的类型
         if (m_current_file_type.empty())                // 如果获取不到音频文件的类型，则将其文件扩展名作为文件类型
@@ -554,6 +557,15 @@ void CPlayer::MusicControl(Command command, int volume_step)
     break;
     case Command::PLAY:
         ConnotPlayWarning();
+        //响度平衡：响度曲线还在分析时先不播（否则开头会按原始音量出声），
+        //分析完成后由模块自动开始播放
+        if (LoudnessBalance::HoldPlaybackUntilReady())
+        {
+            m_playing = PS_PLAYING;
+            m_controls.UpdateControls(PlaybackStatus::Playing);
+            MediaTransControlsLoadThumbnailDefaultImage();
+            break;
+        }
         m_pCore->Play();
         m_playing = PS_PLAYING;
         GetPlayerCoreError(L"Play");
@@ -563,18 +575,21 @@ void CPlayer::MusicControl(Command command, int volume_step)
     case Command::CLOSE:
         //RemoveFXHandle();
         m_file_opend = false;   // 主窗口定时器使用此变量以阻止播放结束自动下一曲
+        LoudnessBalance::OnTrackClosed(GetBassHandle());    //响度平衡：摘掉 DSP，停止后台分析
         m_pCore->Close();
         m_playing = PS_STOPED;
         SendMessage(theApp.m_pMainWnd->GetSafeHwnd(), WM_AFTER_MUSIC_STREAM_CLOSED, 0, 0);
         m_controls.UpdateControls(PlaybackStatus::Closed);
         break;
     case Command::PAUSE:
+        LoudnessBalance::CancelPendingResume();     //响度平衡：用户主动暂停，不要再自动开始
         m_pCore->Pause();
         m_playing = PS_PAUSED;
         m_controls.UpdateControls(PlaybackStatus::Paused);
         MediaTransControlsLoadThumbnailDefaultImage();
         break;
     case Command::STOP:
+        LoudnessBalance::CancelPendingResume();     //响度平衡：用户主动停止，不要再自动开始
         if (GetCurrentSongInfo().is_cue && GetCurrentSongInfo().start_pos > 0)
         {
             SeekTo(0);
@@ -615,10 +630,19 @@ void CPlayer::MusicControl(Command command, int volume_step)
         else
         {
             ConnotPlayWarning();
-            m_pCore->Play();
-            m_playing = PS_PLAYING;
-            GetPlayerCoreError(L"Play");
-            m_controls.UpdateControls(PlaybackStatus::Playing);
+            //响度平衡：曲线未就绪时先不播，等模块自动开始
+            if (LoudnessBalance::HoldPlaybackUntilReady())
+            {
+                m_playing = PS_PLAYING;
+                m_controls.UpdateControls(PlaybackStatus::Playing);
+            }
+            else
+            {
+                m_pCore->Play();
+                m_playing = PS_PLAYING;
+                GetPlayerCoreError(L"Play");
+                m_controls.UpdateControls(PlaybackStatus::Playing);
+            }
         }
         MediaTransControlsLoadThumbnailDefaultImage();
         break;

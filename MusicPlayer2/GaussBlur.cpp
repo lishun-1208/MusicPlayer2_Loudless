@@ -4,6 +4,11 @@
 
 CGaussBlur::CGaussBlur()
 {
+	//注意：m_pTempl 必须初始化为空指针。该对象可能在栈上创建，
+	//若未初始化，SetSigma 中的 realloc 会拿到栈上的随机值，导致堆损坏（0xC0000374）。
+	m_r = -1;
+	m_sigma = -1.0;
+	m_pTempl = NULL;
 }
 
 
